@@ -23,3 +23,33 @@
 **Decision:** Add `components.json`, conventional aliases, a `components/ui` location, and the standard `cn` helper.
 
 **Reason:** Future shadcn/ui components can be added without restructuring the project, while dependencies and UI surface remain minimal today.
+
+## 2026-09-19 — Use B2B2C RA tenants, not an RA marketplace
+
+**Decision:** Treat each individual RA or RA organization as a private tenant whose customers enter through that RA's tenant-branded context. Do not offer RA discovery, comparison, selection, switching, directory, recommendation, or marketplace checkout flows.
+
+**Reason:** The platform sells software to RAs, not analyst discovery services to the public. This keeps customer data, onboarding, services, subscriptions, and eligible content tenant-scoped.
+
+## 2026-09-19 — Separate identity, memberships, customer relationships, and platform authority
+
+**Decision:** Use a global identity separate from tenant memberships, tenant customer relationships, and separately granted platform roles. Support multiple relationships technically, while keeping initial UX tenant-context-first.
+
+**Reason:** This supports future legitimate overlap without authorizing cross-tenant/customer access or turning tenant membership into platform authority.
+
+## 2026-09-19 — Provision tenants through a shared, configuration-driven control plane
+
+**Decision:** Future Platform Admin operations provision, configure, activate, suspend, and audit RA tenants. One shared codebase/dashboard/landing engine uses trusted tenant context, controlled configuration, and tenant data.
+
+**Reason:** Onboarding any number of RAs must not require per-RA source routes, copied dashboards/sites, source-condition branches, or new deployments.
+
+## 2026-09-19 — Use controlled tenant branding and trusted domain context
+
+**Decision:** Future tenant landing pages use shared templates plus controlled branding/configuration; unique subdomains and optional verified custom domains resolve tenant context but do not grant authorization.
+
+**Reason:** This supports RA branding safely without a general executable page builder, host spoofing risk, or private-data exposure.
+
+## 2026-09-19 — Preserve existing-customer onboarding and tenant-scoped distribution requirements
+
+**Decision:** Design for approved invitation, manual onboarding, bulk import, activation, and account-claiming options for existing RA customers. Future calls are tenant-owned and distributed only to eligible customers of the same tenant.
+
+**Reason:** RAs may join with established customers, and tenant boundaries must hold across onboarding, entitlements, notifications, and content delivery.

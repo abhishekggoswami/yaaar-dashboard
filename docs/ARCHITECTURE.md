@@ -17,6 +17,16 @@ The UI shell is shared and receives its active route explicitly. It is presentat
 
 PostgreSQL with Prisma is the intended persistence stack. The database is not initialized in TASK-001 because no validated domain model, tenancy policy, or migration requirement exists. `DATABASE_URL` is documented as an example configuration value only.
 
-## Future security boundary
+## Identity, tenant, and B2B2C boundary
 
-Authentication, authorization, and tenant isolation must be enforced server-side before protected product functionality is introduced. Frontend route visibility is never a security control. Secrets must remain in local environment files or a managed secret store and must not be committed.
+TASK-002 defines a B2B2C architecture without implementing authentication. A global identity is separate from a Research Analyst (RA) tenant, tenant membership, tenant-specific customer relationship, and global platform-role grant. One identity may technically participate in multiple tenant relationships, but the initial experience is tenant-context-first, not a marketplace or RA switching experience.
+
+Each RA has a private tenant-branded environment. A shared dashboard and shared landing templates/components are resolved from trusted tenant context, controlled tenant branding/configuration, and tenant data. Onboarding RA #2, #50, or #500 must never require copying an application, coding RA-specific routes, source forks, or separate deployments. Future hostname mapping via unique subdomains and optional verified custom domains establishes tenant context, but never private-resource authorization.
+
+Platform Admin is the future auditable control plane for tenant provisioning, activation, suspension, configuration, and carefully scoped support. `PLATFORM_ADMIN` remains separate from `ANALYST_OWNER`; membership cannot grant platform authority and platform authority is not blanket sensitive-data access.
+
+Authentication, authorization, and tenant isolation must be enforced server-side before protected functionality. Server Components, Route Handlers, Server Actions, data access, object access, caches, exports, and background jobs all need scoped authorization. Middleware/proxy may be an early gate but never the sole control. Frontend visibility and client-supplied IDs/roles are not authorization.
+
+Tenant-owned records need a direct `tenantId` or provable ownership. Tenant-specific calls must be server-authorized, tenant-owned, and distributed only to eligible customers of the same tenant. Secrets remain in local environment files or a managed secret store and must not be committed.
+
+See `IDENTITY_AND_TENANCY.md`, `AUTHORIZATION_MATRIX.md`, `SECURITY_BOUNDARIES.md`, and `AUTH_PROVIDER_EVALUATION.md` for the detailed baseline.
