@@ -1,0 +1,269 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum IdentityStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum PlatformRoleName {
+  PLATFORM_ADMIN
+}
+
+enum TenantType {
+  INDIVIDUAL
+  ORGANIZATION
+}
+
+enum TenantStatus {
+  PROVISIONING
+  PENDING_CONFIGURATION
+  ACTIVE
+  SUSPENDED
+  CLOSED
+}
+
+enum TenantMembershipRole {
+  ANALYST_OWNER
+  ANALYST_ADMIN
+  ANALYST_STAFF
+}
+
+enum TenantMembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+enum CustomerStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum CustomerRelationshipStatus {
+  INVITED
+  PENDING_ACTIVATION
+  ACTIVE
+  SUSPENDED
+  REVOKED
+}
+
+enum CustomerOnboardingSource {
+  INVITATION
+  MANUAL
+  BULK_IMPORT
+  ACCOUNT_CLAIM
+  SELF_REGISTRATION
+}
+
+enum TenantTheme {
+  DEFAULT
+}
+
+enum LandingPageTemplate {
+  DEFAULT
+}
+
+enum TenantDomainType {
+  PLATFORM_SUBDOMAIN
+  CUSTOM_DOMAIN
+}
+
+enum TenantDomainStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  ACTIVE
+  SUSPENDED
+  DISABLED
+}
+
+enum AuditOutcome {
+  SUCCESS
+  DENIED
+  FAILURE
+}
+
+model Identity {
+  id                    String                 @id @default(cuid())
+  status                IdentityStatus         @default(PENDING)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  platformRoles         PlatformRoleGrant[]    @relation("PlatformRoleSubject")
+  platformRolesGranted  PlatformRoleGrant[]    @relation("PlatformRoleGranter")
+  tenantMemberships     TenantMembership[]
+  customerProfiles      CustomerProfile[]
+  customerRelationships CustomerRelationship[]
+  auditEvents           AuditEvent[]           @relation("AuditActor")
+
+  @@index([status])
+}
+
+model PlatformRoleGrant {
+  id                  String           @id @default(cuid())
+  identityId          String
+  role                PlatformRoleName
+  grantedByIdentityId String?
+  grantedAt           DateTime         @default(now())
+  revokedAt           DateTime?
+  identity            Identity         @relation("PlatformRoleSubject", fields: [identityId], references: [id], onDelete: Restrict)
+  grantedByIdentity   Identity?        @relation("PlatformRoleGranter", fields: [grantedByIdentityId], references: [id], onDelete: SetNull)
+
+  @@unique([identityId, role])
+  @@index([role, revokedAt])
+  @@index([grantedByIdentityId])
+}
+
+model Tenant {
+  id                    String                    @id @default(cuid())
+  slug                  String                    @unique @db.VarChar(100)
+  displayName           String                    @db.VarChar(200)
+  type                  TenantType
+  status                TenantStatus              @default(PROVISIONING)
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  memberships           TenantMembership[]
+  customerProfiles      CustomerProfile[]
+  customerRelationships CustomerRelationship[]
+  branding              TenantBranding?
+  configuration         TenantConfiguration?
+  landingPage           LandingPageConfiguration?
+  domains               TenantDomain[]
+  auditEvents           AuditEvent[]
+
+  @@index([status])
+  @@index([type, status])
+}
+
+model TenantMembership {
+  id          String                 @id @default(cuid())
+  tenantId    String
+  identityId  String
+  role        TenantMembershipRole
+  status      TenantMembershipStatus @default(INVITED)
+  invitedAt   DateTime               @default(now())
+  activatedAt DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  tenant      Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  identity    Identity               @relation(fields: [identityId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, identityId])
+  @@index([identityId, tenantId])
+  @@index([tenantId, status])
+}
+
+model CustomerProfile {
+  id                   String                @id @default(cuid())
+  tenantId             String
+  identityId           String
+  status               CustomerStatus        @default(PENDING)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  identity             Identity              @relation(fields: [identityId], references: [id], onDelete: Restrict)
+  customerRelationship CustomerRelationship?
+
+  @@unique([tenantId, identityId])
+  @@unique([id, tenantId, identityId])
+  @@index([tenantId, status])
+  @@index([identityId, tenantId])
+}
+
+model CustomerRelationship {
+  id                String                     @id @default(cuid())
+  tenantId          String
+  identityId        String
+  customerProfileId String
+  status            CustomerRelationshipStatus @default(INVITED)
+  onboardingSource  CustomerOnboardingSource?
+  invitedAt         DateTime                   @default(now())
+  activatedAt       DateTime?
+  revokedAt         DateTime?
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  tenant            Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  identity          Identity                   @relation(fields: [identityId], references: [id], onDelete: Restrict)
+  customerProfile   CustomerProfile            @relation(fields: [customerProfileId, tenantId, identityId], references: [id, tenantId, identityId], onDelete: Restrict)
+
+  @@unique([customerProfileId, tenantId, identityId])
+  @@unique([tenantId, identityId])
+  @@index([tenantId, status])
+  @@index([identityId, tenantId])
+}
+
+model TenantBranding {
+  id           String      @id @default(cuid())
+  tenantId     String      @unique
+  logoUrl      String?     @db.VarChar(2048)
+  theme        TenantTheme @default(DEFAULT)
+  primaryColor String?     @db.VarChar(32)
+  accentColor  String?     @db.VarChar(32)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+}
+
+model TenantConfiguration {
+  id                   String   @id @default(cuid())
+  tenantId             String   @unique
+  configurationVersion Int      @default(1)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+}
+
+model LandingPageConfiguration {
+  id        String              @id @default(cuid())
+  tenantId  String              @unique
+  template  LandingPageTemplate @default(DEFAULT)
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  tenant    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+}
+
+model TenantDomain {
+  id         String             @id @default(cuid())
+  tenantId   String
+  hostname   String             @unique @db.VarChar(253)
+  type       TenantDomainType
+  status     TenantDomainStatus @default(PENDING_VERIFICATION)
+  verifiedAt DateTime?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, status])
+  @@index([type, status])
+}
+
+model AuditEvent {
+  id              String       @id @default(cuid())
+  actorIdentityId String?
+  tenantId        String?
+  action          String       @db.VarChar(128)
+  targetType      String       @db.VarChar(128)
+  targetId        String?      @db.VarChar(191)
+  outcome         AuditOutcome
+  correlationId   String?      @db.VarChar(128)
+  metadata        Json?
+  createdAt       DateTime     @default(now())
+  actor           Identity?    @relation("AuditActor", fields: [actorIdentityId], references: [id], onDelete: Restrict)
+  tenant          Tenant?      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, createdAt])
+  @@index([actorIdentityId, createdAt])
+  @@index([targetType, targetId])
+  @@index([outcome, createdAt])
+}

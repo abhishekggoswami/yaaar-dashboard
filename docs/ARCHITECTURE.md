@@ -15,7 +15,7 @@ The application uses Next.js App Router with TypeScript strict mode.
 
 The UI shell is shared and receives its active route explicitly. It is presentational only and contains no identity, role, tenant, or authorization logic.
 
-PostgreSQL with Prisma is the intended persistence stack. The database is not initialized in TASK-001 because no validated domain model, tenancy policy, or migration requirement exists. `DATABASE_URL` is documented as an example configuration value only.
+PostgreSQL on Neon is the development persistence stack. TASK-003 configures Prisma 7 with a committed multi-tenant foundation schema/migration, an ignored generated client output, and a server-only `src/lib/prisma.ts` singleton. Runtime queries use the pooled `DATABASE_URL`; Prisma CLI/migrations use the direct `DIRECT_DATABASE_URL`. Both are local ignored environment configuration, never repository values.
 
 ## Identity, tenant, and B2B2C boundary
 
@@ -30,3 +30,5 @@ Authentication, authorization, and tenant isolation must be enforced server-side
 Tenant-owned records need a direct `tenantId` or provable ownership. Tenant-specific calls must be server-authorized, tenant-owned, and distributed only to eligible customers of the same tenant. Secrets remain in local environment files or a managed secret store and must not be committed.
 
 See `IDENTITY_AND_TENANCY.md`, `AUTHORIZATION_MATRIX.md`, `SECURITY_BOUNDARIES.md`, and `AUTH_PROVIDER_EVALUATION.md` for the detailed baseline.
+
+See `DATABASE_FOUNDATION.md` for model scope, ownership, constraints, lifecycle/referential-action choices, migration workflow, and database security review.
