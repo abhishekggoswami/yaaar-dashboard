@@ -53,3 +53,21 @@
 **Decision:** Design for approved invitation, manual onboarding, bulk import, activation, and account-claiming options for existing RA customers. Future calls are tenant-owned and distributed only to eligible customers of the same tenant.
 
 **Reason:** RAs may join with established customers, and tenant boundaries must hold across onboarding, entitlements, notifications, and content delivery.
+
+## 2026-09-19 — Establish a direct-ownership Prisma foundation
+
+**Decision:** Use Prisma 7.10 with Neon PostgreSQL, direct tenant ownership on tenant-scoped models, opaque `cuid()` primary keys, lifecycle states, explicit constraints/indexes, and restrictive foreign keys. Select `CustomerRelationship` as the sole customer-relationship lifecycle model.
+
+**Reason:** This creates the minimum reproducible foundation while making tenant scope and customer profile/identity consistency provable at the database level without introducing business workflows.
+
+## 2026-09-19 — Separate pooled runtime and direct migration connections
+
+**Decision:** Use a pooled `DATABASE_URL` for the server-side Prisma driver adapter and a direct `DIRECT_DATABASE_URL` for Prisma CLI/migrations.
+
+**Reason:** This follows current Prisma guidance for serverless Neon PostgreSQL while keeping all connection values local, ignored, and out of schema/source documentation.
+
+## 2026-09-19 — Preserve audit history through restrictive foreign keys
+
+**Decision:** Do not use cascading deletion for core identity, tenant, profile, relationship, or audit references. Use lifecycle transitions and retain audit history; a grantor reference may be nulled without deleting the role grant.
+
+**Reason:** Account disabling, tenant suspension, revocation, deletion, and retention are distinct. Cascades could silently erase security-relevant history before legal/retention policy is settled.

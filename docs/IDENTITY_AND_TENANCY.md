@@ -90,7 +90,7 @@ flowchart TD
   T --> AE
 ```
 
-Candidate concepts for TASK-003: `Identity/User`, `PlatformRole`, `Tenant`, `TenantMembership`, `CustomerProfile`, `CustomerRelationship`/`CustomerMembership`, `TenantBranding`, `TenantDomain`, `TenantConfiguration`, `LandingPageConfiguration`, and `AuditEvent`. TASK-003 must select the minimum first schema and validate identifiers, constraints, lifecycle transitions, and ownership; do not create a giant future-module schema.
+TASK-003 implements the minimum persistence spine as `Identity`, `PlatformRoleGrant`, `Tenant`, `TenantMembership`, `CustomerProfile`, `CustomerRelationship`, `TenantBranding`, `TenantDomain`, `TenantConfiguration`, `LandingPageConfiguration`, and `AuditEvent`. `CustomerRelationship` is the selected term; it remains distinct from the profile to hold access/onboarding lifecycle without implementing workflows. See `DATABASE_FOUNDATION.md` for database constraints and referential actions.
 
 ## Unresolved human decisions
 

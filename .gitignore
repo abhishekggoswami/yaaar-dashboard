@@ -12,6 +12,9 @@
 # TypeScript build metadata
 *.tsbuildinfo
 
+# Generated Prisma Client (recreated by `prisma generate`)
+/src/generated/
+
 # logs
 *.log
 npm-debug.log*
